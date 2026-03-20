@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Edit Student</title>
+
+<style>
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 30px 20px;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+h2 {
+  color: #667eea;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 600;
+  font-size: 0.95em;
+}
+
+input, select {
+  padding: 12px;
+  width: 100%;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1em;
+  transition: border-color 0.3s ease;
+  font-family: Arial, sans-serif;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.student-photo-preview {
+  margin: 15px 0;
+  text-align: center;
+}
+
+.student-photo-preview img {
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  border: 3px solid #667eea;
+  object-fit: cover;
+}
+
+.button-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+button, .back-btn {
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1em;
+  text-decoration: none;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.back-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.back-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+}
+
+.error {
+  background: #f5576c;
+  color: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.success {
+  background: #4facfe;
+  color: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+  <h2>✏️ Edit Student</h2>
+
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+
+  {% if student %}
+  <form method="POST" enctype="multipart/form-data">
+
+    <div class="form-group">
+      <label>Admission Number *</label>
+      <input type="text" name="admission" value="{{ student[1] }}" required>
+    </div>
+
+    <div class="form-group">
+      <label>First Name *</label>
+      <input type="text" name="first_name" value="{{ student[2] }}" required>
+    </div>
+
+    <div class="form-group">
+      <label>Last Name *</label>
+      <input type="text" name="last_name" value="{{ student[3] }}" required>
+    </div>
+
+    <div class="form-group">
+      <label>Gender</label>
+      <select name="gender">
+        <option value="">Select...</option>
+        <option value="Male" {% if student[4] == 'Male' %}selected{% endif %}>Male</option>
+        <option value="Female" {% if student[4] == 'Female' %}selected{% endif %}>Female</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Date of Birth</label>
+      <input type="date" name="dob" value="{{ student[5] }}">
+    </div>
+
+    <div class="form-group">
+      <label>Class *</label>
+      <select name="class" required>
+        <option value="">Select...</option>
+        <option value="S1" {% if student[6] == 'S1' %}selected{% endif %}>S1</option>
+        <option value="S2" {% if student[6] == 'S2' %}selected{% endif %}>S2</option>
+        <option value="S3" {% if student[6] == 'S3' %}selected{% endif %}>S3</option>
+        <option value="S4" {% if student[6] == 'S4' %}selected{% endif %}>S4</option>
+        <option value="S5" {% if student[6] == 'S5' %}selected{% endif %}>S5</option>
+        <option value="S6" {% if student[6] == 'S6' %}selected{% endif %}>S6</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Stream</label>
+      <input type="text" name="stream" value="{{ student[7] }}" placeholder="e.g., Science, Arts">
+    </div>
+
+    <div class="form-group">
+      <label>Parent/Guardian Name</label>
+      <input type="text" name="parent" value="{{ student[8] }}">
+    </div>
+
+    <div class="form-group">
+      <label>Phone Number *</label>
+      <input type="text" name="phone" value="{{ student[9] }}" required>
+    </div>
+
+    {% if student[10] %}
+    <div class="student-photo-preview">
+      <label>Current Photo</label><br>
+      <img src="{{ url_for('static', filename='student_photos/' + student[10]) }}" alt="Student Photo">
+    </div>
+    {% endif %}
+
+    <div class="form-group">
+      <label>Update Photo (Leave empty to keep current)</label>
+      <input type="file" name="photo" accept="image/*">
+    </div>
+
+    <div class="button-group">
+      <button type="submit">✅ Update Student</button>
+      <a href="/students" class="back-btn">← Cancel</a>
+    </div>
+
+  </form>
+  {% else %}
+  <div class="error">Student not found!</div>
+  <div class="button-group" style="margin-top: 20px;">
+    <a href="/students" class="back-btn" style="grid-column: 1 / -1;">← Back to Students</a>
+  </div>
+  {% endif %}
+
+</div>
+
+</body>
+</html>
