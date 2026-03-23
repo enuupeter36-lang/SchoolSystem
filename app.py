@@ -6,7 +6,6 @@ import pandas as pd
 import qrcode
 from reportlab.graphics.barcode.code128 import Code128
 from dotenv import load_dotenv
-
 load_dotenv()
 
 app = Flask(__name__)
