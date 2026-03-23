@@ -29,7 +29,7 @@ os.makedirs(BARCODE_FOLDER, exist_ok=True)
 def get_db():
     """Get database connection"""
     try:
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
         return conn
     except Exception as e:
         print(f"Database connection error: {e}")
