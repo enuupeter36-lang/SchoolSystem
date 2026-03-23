@@ -7,13 +7,15 @@ import qrcode
 from reportlab.graphics.barcode.code128 import Code128
 from dotenv import load_dotenv
 
-load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "secret123")
 
 # PostgreSQL Configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise Exception("DATABASE_URL is not set. Check Render environment variables.")
 
 # Config
 UPLOAD_FOLDER = "static/student_photos"
@@ -29,7 +31,7 @@ os.makedirs(BARCODE_FOLDER, exist_ok=True)
 def get_db():
     """Get database connection"""
     try:
-        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+        conn = psycopg2.connect(DATABASE_URL)
         return conn
     except Exception as e:
         print(f"Database connection error: {e}")
