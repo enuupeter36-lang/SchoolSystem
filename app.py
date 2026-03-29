@@ -15,6 +15,10 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise Exception("DATABASE_URL is not set. Check Render environment variables.")
 
+# ✅ Fix postgres:// issue on Render
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 UPLOAD_FOLDER = "static/student_photos"
 QRCODE_FOLDER = "static/qrcodes"
 BARCODE_FOLDER = "static/barcodes"
@@ -29,7 +33,7 @@ def get_db():
     try:
         return psycopg2.connect(DATABASE_URL)
     except Exception as e:
-        print("DB CONNECTION ERROR:", e)
+        print("❌ DB CONNECTION ERROR:", e)
         return None
 
 def init_db():
@@ -59,9 +63,12 @@ def init_db():
         cur.close()
         print("✅ Database initialized")
     except Exception as e:
-        print("INIT DB ERROR:", e)
+        print("❌ INIT DB ERROR:", e)
     finally:
         conn.close()
+
+# ✅ RUN DB INIT ON START (IMPORTANT FIX)
+init_db()
 
 def execute_query(query, params=None):
     conn = get_db()
@@ -73,11 +80,10 @@ def execute_query(query, params=None):
         cur.execute(query, params or ())
         conn.commit()
         cur.close()
-        return True
     except Exception as e:
         conn.rollback()
         print("🔥 QUERY ERROR:", e)
-        raise e   # ✅ VERY IMPORTANT
+        raise e
     finally:
         conn.close()
 
@@ -93,25 +99,8 @@ def fetch_all(query, params=None):
         cur.close()
         return data
     except Exception as e:
-        print("FETCH ERROR:", e)
+        print("❌ FETCH ERROR:", e)
         return []
-    finally:
-        conn.close()
-
-def fetch_one(query, params=None):
-    conn = get_db()
-    if not conn:
-        return None
-
-    try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute(query, params or ())
-        data = cur.fetchone()
-        cur.close()
-        return data
-    except Exception as e:
-        print("FETCH ONE ERROR:", e)
-        return None
     finally:
         conn.close()
 
@@ -127,7 +116,7 @@ def fetch_count(query):
         cur.close()
         return count
     except Exception as e:
-        print("COUNT ERROR:", e)
+        print("❌ COUNT ERROR:", e)
         return 0
     finally:
         conn.close()
@@ -139,22 +128,25 @@ def generate_qr(admission):
         qr = qrcode.make(admission)
         qr.save(f"{QRCODE_FOLDER}/{admission}.png")
     except Exception as e:
-        print("QR ERROR:", e)
+        print("❌ QR ERROR:", e)
 
 def generate_barcode(admission):
     try:
         barcode = Code128(admission)
         barcode.save(f"{BARCODE_FOLDER}/{admission}.png")
     except Exception as e:
-        print("BARCODE ERROR:", e)
+        print("❌ BARCODE ERROR:", e)
 
 # ================= ROUTES =================
 
 @app.route("/")
 def dashboard():
-    total = fetch_count("SELECT COUNT(*) FROM students")
-    classes = fetch_all("SELECT class, COUNT(*) as count FROM students GROUP BY class")
-    return render_template("dashboard.html", total=total, classes=classes)
+    try:
+        total = fetch_count("SELECT COUNT(*) FROM students")
+        classes = fetch_all("SELECT class, COUNT(*) as count FROM students GROUP BY class")
+        return render_template("dashboard.html", total=total, classes=classes)
+    except Exception as e:
+        return f"Dashboard Error: {e}"
 
 @app.route("/add", methods=["GET", "POST"])
 def add_student():
@@ -165,12 +157,8 @@ def add_student():
 
             filename = ""
             if photo and photo.filename != "":
-                try:
-                    filename = photo.filename
-                    photo.save(os.path.join(UPLOAD_FOLDER, filename))
-                except Exception as e:
-                    print("PHOTO ERROR:", e)
-                    filename = ""
+                filename = photo.filename
+                photo.save(os.path.join(UPLOAD_FOLDER, filename))
 
             execute_query("""
                 INSERT INTO students 
@@ -183,7 +171,7 @@ def add_student():
                 data.get("gender", ""),
                 data.get("dob", ""),
                 data.get("class"),
-                data.get("stream", ""),   # ✅ FIXED
+                data.get("stream", ""),
                 data.get("parent", ""),
                 data.get("phone"),
                 filename
@@ -206,20 +194,22 @@ def add_student():
 
 @app.route("/students")
 def students():
-    data = fetch_all("SELECT * FROM students ORDER BY admission")
-    return render_template("students.html", students=data)
+    try:
+        data = fetch_all("SELECT * FROM students ORDER BY admission")
+        return render_template("students.html", students=data)
+    except Exception as e:
+        return f"Students Error: {e}"
 
 @app.route("/delete/<int:id>")
 def delete_student(id):
     try:
         execute_query("DELETE FROM students WHERE id=%s", (id,))
     except Exception as e:
-        print("DELETE ERROR:", e)
+        print("❌ DELETE ERROR:", e)
 
     return redirect("/students")
 
 # ================= RUN =================
 
 if __name__ == "__main__":
-    init_db()
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=True)
