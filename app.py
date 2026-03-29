@@ -121,6 +121,23 @@ def fetch_count(query):
     finally:
         conn.close()
 
+def fetch_one(query, params=None):
+    conn = get_db()
+    if not conn:
+        return None
+
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(query, params or ())
+        data = cur.fetchone()
+        cur.close()
+        return data
+    except Exception as e:
+        print("❌ FETCH ONE ERROR:", e)
+        return None
+    finally:
+        conn.close()
+
 # ================= HELPERS =================
 
 def generate_qr(admission):
@@ -237,7 +254,7 @@ def students():
     except Exception as e:
         return f"Students Error: {e}"
 
-        @app.route("/edit/<int:id>", methods=["GET", "POST"])
+@app.route("/edit/<int:id>", methods=["GET", "POST"])
 def edit_student(id):
     if request.method == "POST":
         try:
