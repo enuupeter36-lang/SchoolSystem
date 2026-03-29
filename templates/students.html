@@ -275,35 +275,41 @@ img {
 
       {% for s in students %}
 
-      <tr>
+<tr>
 
-        <td>
-          <img src="{{ url_for('static', filename='student_photos/' + s[10]) }}" alt="Photo">
-        </td>
+  <td>
+    {% if s.photo %}
+      <img src="{{ url_for('static', filename='student_photos/' + s.photo) }}" alt="Photo">
+    {% else %}
+      <img src="{{ url_for('static', filename='default.png') }}" alt="No Photo">
+    {% endif %}
+  </td>
 
-        <td><strong>{{ s[1] }}</strong></td>
+  <td><strong>{{ s.admission }}</strong></td>
 
-        <td>{{ s[2] }} {{ s[3] }}</td>
+  <td>{{ s.first_name }} {{ s.last_name }}</td>
 
-        <td><span style="background: #667eea; color: white; padding: 4px 8px; border-radius: 4px;">{{ s[6] }}</span></td>
+  <td>
+    <span style="background: #667eea; color: white; padding: 4px 8px; border-radius: 4px;">
+      {{ s.class }}
+    </span>
+  </td>
 
-        <td>{{ s[7] }}</td>
+  <td>{{ s.stream }}</td>
 
-        <td>{{ s[9] }}</td>
+  <td>{{ s.phone }}</td>
 
-        <td>
+  <td>
+    <div class="action-buttons">
+      <a href="/edit/{{ s.id }}" class="action-btn edit-btn">✏️ Edit</a>
+      <a href="/id/{{ s.admission }}" class="action-btn id-btn">🎫 Card</a>
+      <a href="/delete/{{ s.id }}" class="action-btn delete-btn" onclick="return confirm('Delete this student?')">🗑️ Delete</a>
+    </div>
+  </td>
 
-          <div class="action-buttons">
-            <a href="{{ url_for('edit_student', id=s[0]) }}" class="action-btn edit-btn">✏️ Edit</a>
-            <a href="/id/{{ s[0] }}" class="action-btn id-btn">🎫 Card</a>
-            <a href="/delete/{{ s[0] }}" class="action-btn delete-btn" onclick="return confirm('Delete this student?')">🗑️ Delete</a>
-          </div>
+</tr>
 
-        </td>
-
-      </tr>
-
-      {% endfor %}
+{% endfor %}
 
     </table>
 
