@@ -190,6 +190,20 @@ h1 {
     </div>
   </div>
 
+<h3>Students by Class</h3>
+<ul>
+  {% for c in classes %}
+    <li>{{ c.class }}: {{ c.count }}</li>
+  {% endfor %}
+</ul>
+
+<h3>Gender Distribution</h3>
+<ul>
+  {% for g in gender %}
+    <li>{{ g.gender }}: {{ g.count }}</li>
+  {% endfor %}
+</ul>
+
   <div class="button-grid">
     <a href="/students" class="btn btn-primary">👥 View Students</a>
     <a href="/add" class="btn btn-secondary">➕ Register Student</a>

@@ -143,11 +143,29 @@ def generate_barcode(admission):
 def dashboard():
     try:
         total = fetch_count("SELECT COUNT(*) FROM students")
-        classes = fetch_all("SELECT class, COUNT(*) as count FROM students GROUP BY class")
-        return render_template("dashboard.html", total=total, classes=classes)
+
+        classes = fetch_all("""
+            SELECT class, COUNT(*) as count 
+            FROM students 
+            GROUP BY class 
+            ORDER BY class
+        """)
+
+        gender = fetch_all("""
+            SELECT gender, COUNT(*) as count 
+            FROM students 
+            GROUP BY gender
+        """)
+
+        return render_template(
+            "dashboard.html",
+            total=total,
+            classes=classes,
+            gender=gender
+        )
+
     except Exception as e:
         return f"Dashboard Error: {e}"
-
 @app.route("/add", methods=["GET", "POST"])
 def add_student():
     if request.method == "POST":
@@ -195,19 +213,75 @@ def add_student():
 @app.route("/students")
 def students():
     try:
-        data = fetch_all("SELECT * FROM students ORDER BY admission")
+        search = request.args.get("search", "")
+        class_filter = request.args.get("class", "")
+
+        query = "SELECT * FROM students WHERE 1=1"
+        params = []
+
+        if search:
+            query += " AND (LOWER(first_name) LIKE %s OR LOWER(last_name) LIKE %s OR LOWER(admission) LIKE %s)"
+            search_term = f"%{search.lower()}%"
+            params.extend([search_term, search_term, search_term])
+
+        if class_filter:
+            query += " AND class=%s"
+            params.append(class_filter)
+
+        query += " ORDER BY admission"
+
+        data = fetch_all(query, params)
+
         return render_template("students.html", students=data)
+
     except Exception as e:
         return f"Students Error: {e}"
 
-@app.route("/delete/<int:id>")
-def delete_student(id):
-    try:
-        execute_query("DELETE FROM students WHERE id=%s", (id,))
-    except Exception as e:
-        print("❌ DELETE ERROR:", e)
+        @app.route("/edit/<int:id>", methods=["GET", "POST"])
+def edit_student(id):
+    if request.method == "POST":
+        try:
+            data = request.form
 
-    return redirect("/students")
+            execute_query("""
+                UPDATE students SET
+                first_name=%s,
+                last_name=%s,
+                gender=%s,
+                dob=%s,
+                class=%s,
+                stream=%s,
+                parent=%s,
+                phone=%s
+                WHERE id=%s
+            """, (
+                data.get("first_name"),
+                data.get("last_name"),
+                data.get("gender"),
+                data.get("dob"),
+                data.get("class"),
+                data.get("stream"),
+                data.get("parent"),
+                data.get("phone"),
+                id
+            ))
+
+            return redirect("/students")
+
+        except Exception as e:
+            return f"Edit Error: {e}"
+
+    student = fetch_one("SELECT * FROM students WHERE id=%s", (id,))
+    return render_template("edit_student.html", student=student)
+
+@app.route("/id/<admission>")
+def generate_id(admission):
+    student = fetch_one("SELECT * FROM students WHERE admission=%s", (admission,))
+
+    if not student:
+        return "Student not found"
+
+    return render_template("id_card.html", s=student)
 
 # ================= RUN =================
 
