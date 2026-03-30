@@ -1,91 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Student ID Card</title>
-
+<title>ID Card</title>
 <style>
-body {
-  font-family: Arial;
-  background: #f4f4f4;
-  text-align: center;
-  padding: 20px;
-}
-
-.card {
-  width: 350px;
-  margin: auto;
-  border: 3px solid #667eea;
-  border-radius: 12px;
-  padding: 15px;
-  background: white;
-}
-
-.logo {
-  width: 60px;
-  margin-bottom: 5px;
-}
-
-.photo {
-  width: 100px;
-  height: 120px;
-  object-fit: cover;
-  border: 2px solid #667eea;
-}
-
-.qr {
-  width: 80px;
-  margin-top: 10px;
-}
-
-.barcode {
-  width: 150px;
-  margin-top: 10px;
-}
-
-.btn {
-  margin-top: 15px;
-  padding: 10px 20px;
-  border: none;
-  background: #667eea;
-  color: white;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-@media print {
-  .btn {
-    display: none;
-  }
-}
+body { font-family: Arial; display: flex; justify-content: center; padding: 50px; background: #f4f4f4; }
+.card { border: 2px solid #667eea; padding: 15px; border-radius: 10px; width: 90mm; background: white; text-align: center; }
+.logo { width: 40px; margin-bottom: 5px; }
+.photo { width: 25mm; height: 30mm; object-fit: cover; border: 2px solid #667eea; margin-bottom: 5px; }
+.qr { width: 20mm; margin-top: 5px; }
+.barcode { width: 40mm; margin-top: 5px; }
+.top { font-weight: bold; margin-bottom: 5px; }
 </style>
-
 </head>
-
 <body>
-
 <div class="card">
-
-  <!-- ✅ LOGO -->
   <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
-
-  <h3>LOLACHAT SEED<br>SECONDARY SCHOOL</h3>
-
-  <img src="{{ url_for('static', filename='student_photos/' + (s.photo or 'default.png')) }}" class="photo">
-
-  <h4>{{ s.first_name }} {{ s.last_name }}</h4>
-
-  <p><b>Admission:</b> {{ s.admission }}</p>
-  <p><b>Class:</b> {{ s.class }}</p>
-  <p><b>Stream:</b> {{ s.stream or '-' }}</p>
-
-  <img src="{{ url_for('static', filename='barcodes/' + s.admission + '.png') }}" class="barcode">
-  <br>
-  <img src="{{ url_for('static', filename='qrcodes/' + s.admission + '.png') }}" class="qr">
-
+  <div class="top">LOLACHAT SEED S.S</div>
+  <img src="{{ url_for('static', filename='student_photos/' + (student.photo or 'default.png')) }}" class="photo">
+  <div><b>{{ student.first_name }} {{ student.last_name }}</b></div>
+  <div>Adm: {{ student.admission }}</div>
+  <div>{{ student.class }} {{ student.stream or '' }}</div>
+  <img src="{{ url_for('static', filename='barcodes/' + student.admission + '.png') }}" class="barcode">
+  <img src="{{ url_for('static', filename='qrcodes/' + student.admission + '.png') }}" class="qr">
 </div>
-
-<button onclick="window.print()" class="btn">🖨 Print</button>
-<a href="/students" class="btn">← Back</a>
-
 </body>
 </html>

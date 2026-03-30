@@ -1,50 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>School Management System</title>
+    <title>School System Home</title>
     <style>
         body {
-            font-family: Arial;
-            background: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
             text-align: center;
-            padding: 50px;
+            background: white;
+            padding: 50px 80px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-
         h1 {
-            color: #333;
+            color: #667eea;
+            margin-bottom: 40px;
         }
-
-        .menu {
-            margin-top: 40px;
-        }
-
-        .menu a {
+        a.btn {
             display: inline-block;
-            margin: 15px;
-            padding: 15px 25px;
-            background: #007bff;
-            color: white;
-            text-decoration: none;
+            padding: 15px 30px;
+            margin: 10px;
             border-radius: 8px;
-            font-size: 18px;
+            text-decoration: none;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            transition: all 0.3s ease;
         }
-
-        .menu a:hover {
-            background: #0056b3;
+        a.btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
         }
     </style>
 </head>
 <body>
-
-<h1>🎓 School Management System</h1>
-
-<div class="menu">
-    <a href="/students">📋 View Students</a>
-    <a href="/add">➕ Add Student</a>
-    <a href="/dashboard">📊 Dashboard</a>
-    <a href="/export/excel">📥 Export Excel</a>
-    <a href="/export/pdf">📄 Export PDF</a>
-</div>
-
+    <div class="container">
+        <h1>🏫 School Management System</h1>
+        <a href="/dashboard" class="btn">📊 Dashboard</a>
+        <a href="/students" class="btn">👥 View Students</a>
+        <a href="/add" class="btn">➕ Add Student</a>
+    </div>
 </body>
 </html>

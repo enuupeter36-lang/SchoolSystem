@@ -1,53 +1,158 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Edit Student</title>
+  <title>Edit Student</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 30px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    h2 {
+      color: #667eea;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: all 0.3s ease;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234,0.2);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      font-size: 1em;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255,152,0,0.4);
+    }
+
+    .back-btn {
+      display: inline-block;
+      width: 100%;
+      padding: 14px;
+      text-align: center;
+      border-radius: 8px;
+      font-weight: bold;
+      text-decoration: none;
+      color: white;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      margin-top: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(245,87,108,0.4);
+    }
+  </style>
 </head>
 <body>
 
-<h2>Edit Student</h2>
+<div class="container">
+  <h2>✏️ Edit Student</h2>
 
-<form method="POST">
-
-    Admission:<br>
-    <input type="text" name="admission" value="{{ student.admission }}"><br><br>
-
-    First Name:<br>
-    <input type="text" name="first_name" value="{{ student.first_name }}"><br><br>
-
-    Last Name:<br>
-    <input type="text" name="last_name" value="{{ student.last_name }}"><br><br>
-
-    Gender:<br>
-    <select name="gender">
+  <form method="POST" enctype="multipart/form-data">
+    <div class="form-group">
+      <label>Admission Number *</label>
+      <input type="text" name="admission" value="{{ student.admission }}" required>
+    </div>
+    <div class="form-group">
+      <label>First Name *</label>
+      <input type="text" name="first_name" value="{{ student.first_name }}" required>
+    </div>
+    <div class="form-group">
+      <label>Last Name *</label>
+      <input type="text" name="last_name" value="{{ student.last_name }}" required>
+    </div>
+    <div class="form-group">
+      <label>Gender</label>
+      <select name="gender">
+        <option value="">Select...</option>
         <option {% if student.gender == 'Male' %}selected{% endif %}>Male</option>
         <option {% if student.gender == 'Female' %}selected{% endif %}>Female</option>
-    </select><br><br>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Date of Birth</label>
+      <input type="date" name="dob" value="{{ student.dob }}">
+    </div>
+    <div class="form-group">
+      <label>Class *</label>
+      <select name="class" required>
+        <option value="">Select...</option>
+        <option {% if student.class == 'S1' %}selected{% endif %}>S1</option>
+        <option {% if student.class == 'S2' %}selected{% endif %}>S2</option>
+        <option {% if student.class == 'S3' %}selected{% endif %}>S3</option>
+        <option {% if student.class == 'S4' %}selected{% endif %}>S4</option>
+        <option {% if student.class == 'S5' %}selected{% endif %}>S5</option>
+        <option {% if student.class == 'S6' %}selected{% endif %}>S6</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Stream</label>
+      <input type="text" name="stream" value="{{ student.stream }}">
+    </div>
+    <div class="form-group">
+      <label>Parent/Guardian Name</label>
+      <input type="text" name="parent" value="{{ student.parent }}">
+    </div>
+    <div class="form-group">
+      <label>Phone Number *</label>
+      <input type="text" name="phone" value="{{ student.phone }}" required>
+    </div>
+    <div class="form-group">
+      <label>Student Photo</label>
+      <input type="file" name="photo" accept="image/*">
+    </div>
 
-    DOB:<br>
-    <input type="date" name="dob" value="{{ student.dob }}"><br><br>
-
-    Class:<br>
-    <input type="text" name="class" value="{{ student.class }}"><br><br>
-
-    Stream:<br>
-    <input type="text" name="stream" value="{{ student.stream }}"><br><br>
-
-    Parent:<br>
-    <input type="text" name="parent" value="{{ student.parent }}"><br><br>
-
-    Phone:<br>
-    <input type="text" name="phone" value="{{ student.phone }}"><br><br>
-
-    Photo URL:<br>
-    <input type="text" name="photo" value="{{ student.photo }}"><br><br>
-
-    <button type="submit">Update Student</button>
-
-</form>
-
-<br>
-<a href="/students">Back to Students</a>
+    <button type="submit" class="btn">✅ Update Student</button>
+    <a href="/students" class="back-btn">← Back to Students</a>
+  </form>
+</div>
 
 </body>
 </html>
