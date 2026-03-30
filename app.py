@@ -1,406 +1,182 @@
-import os
-import pandas as pd
-from flask import send_file
-import io
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from flask import Flask, render_template, request, redirect, url_for
-import qrcode
-from reportlab.graphics.barcode.code128 import Code128
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image, Paragraph
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
 import os
-app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "secret123")
+import pandas as pd
+import qrcode
+from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+from flask import Flask, render_template, request, redirect, send_file
 
-# ================= DATABASE =================
+app = Flask(__name__)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-if not DATABASE_URL:
-    raise Exception("DATABASE_URL is not set. Check Render environment variables.")
+def get_connection():
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
-# ✅ Fix postgres:// issue on Render
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+# HOME
+@app.route('/')
+def home():
+    return render_template("index.html")
 
-UPLOAD_FOLDER = "static/student_photos"
-QRCODE_FOLDER = "static/qrcodes"
-BARCODE_FOLDER = "static/barcodes"
+# VIEW STUDENTS
+@app.route('/students')
+def students():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM students ORDER BY id DESC")
+    data = cur.fetchall()
+    conn.close()
+    return render_template("students.html", students=data)
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(QRCODE_FOLDER, exist_ok=True)
-os.makedirs(BARCODE_FOLDER, exist_ok=True)
-
-# ================= DB FUNCTIONS =================
-
-def get_db():
-    try:
-        return psycopg2.connect(DATABASE_URL)
-    except Exception as e:
-        print("❌ DB CONNECTION ERROR:", e)
-        return None
-
-def init_db():
-    conn = get_db()
-    if not conn:
-        return
-
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS students (
-            id SERIAL PRIMARY KEY,
-            admission TEXT UNIQUE NOT NULL,
-            first_name TEXT NOT NULL,
-            last_name TEXT NOT NULL,
-            gender TEXT,
-            dob TEXT,
-            class TEXT NOT NULL,
-            stream TEXT,
-            parent TEXT,
-            phone TEXT NOT NULL,
-            photo TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        """)
-        conn.commit()
-        cur.close()
-        print("✅ Database initialized")
-    except Exception as e:
-        print("❌ INIT DB ERROR:", e)
-    finally:
-        conn.close()
-
-# ✅ RUN DB INIT ON START (IMPORTANT FIX)
-init_db()
-
-def execute_query(query, params=None):
-    conn = get_db()
-    if not conn:
-        raise Exception("Database connection failed")
-
-    try:
-        cur = conn.cursor()
-        cur.execute(query, params or ())
-        conn.commit()
-        cur.close()
-    except Exception as e:
-        conn.rollback()
-        print("🔥 QUERY ERROR:", e)
-        raise e
-    finally:
-        conn.close()
-
-def fetch_all(query, params=None):
-    conn = get_db()
-    if not conn:
-        return []
-
-    try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute(query, params or ())
-        data = cur.fetchall()
-        cur.close()
-        return data
-    except Exception as e:
-        print("❌ FETCH ERROR:", e)
-        return []
-    finally:
-        conn.close()
-
-def fetch_count(query):
-    conn = get_db()
-    if not conn:
-        return 0
-
-    try:
-        cur = conn.cursor()
-        cur.execute(query)
-        count = cur.fetchone()[0]
-        cur.close()
-        return count
-    except Exception as e:
-        print("❌ COUNT ERROR:", e)
-        return 0
-    finally:
-        conn.close()
-
-def fetch_one(query, params=None):
-    conn = get_db()
-    if not conn:
-        return None
-
-    try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute(query, params or ())
-        data = cur.fetchone()
-        cur.close()
-        return data
-    except Exception as e:
-        print("❌ FETCH ONE ERROR:", e)
-        return None
-    finally:
-        conn.close()
-
-# ================= HELPERS =================
-
-def generate_qr(admission):
-    try:
-        qr = qrcode.make(admission)
-        qr.save(f"{QRCODE_FOLDER}/{admission}.png")
-    except Exception as e:
-        print("❌ QR ERROR:", e)
-
-def generate_barcode(admission):
-    try:
-        barcode = Code128(admission)
-        barcode.save(f"{BARCODE_FOLDER}/{admission}.png")
-    except Exception as e:
-        print("❌ BARCODE ERROR:", e)
-
-# ================= ROUTES =================
-
-@app.route("/")
-def dashboard():
-    try:
-        total = fetch_count("SELECT COUNT(*) FROM students")
-
-        classes = fetch_all("""
-            SELECT class, COUNT(*) as count 
-            FROM students 
-            GROUP BY class 
-            ORDER BY class
-        """)
-
-        gender = fetch_all("""
-            SELECT gender, COUNT(*) as count 
-            FROM students 
-            GROUP BY gender
-        """)
-
-        return render_template(
-            "dashboard.html",
-            total=total,
-            classes=classes,
-            gender=gender
-        )
-
-    except Exception as e:
-        return f"Dashboard Error: {e}"
-@app.route("/add", methods=["GET", "POST"])
+# ADD STUDENT
+@app.route('/add', methods=['GET', 'POST'])
 def add_student():
-    if request.method == "POST":
-        try:
-            data = request.form
-            photo = request.files.get("photo")
+    if request.method == 'POST':
+        conn = get_connection()
+        cur = conn.cursor()
 
-            filename = ""
-            if photo and photo.filename != "":
-                filename = photo.filename
-                photo.save(os.path.join(UPLOAD_FOLDER, filename))
+        cur.execute("""
+            INSERT INTO students (admission, first_name, last_name, gender, dob, class, stream, parent, phone, photo)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """, (
+            request.form['admission'],
+            request.form['first_name'],
+            request.form['last_name'],
+            request.form['gender'],
+            request.form['dob'],
+            request.form['class'],
+            request.form['stream'],
+            request.form['parent'],
+            request.form['phone'],
+            request.form['photo']
+        ))
 
-            execute_query("""
-                INSERT INTO students 
-                (admission, first_name, last_name, gender, dob, class, stream, parent, phone, photo)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                data.get("admission"),
-                data.get("first_name"),
-                data.get("last_name"),
-                data.get("gender", ""),
-                data.get("dob", ""),
-                data.get("class"),
-                data.get("stream", ""),
-                data.get("parent", ""),
-                data.get("phone"),
-                filename
-            ))
-
-            generate_qr(data.get("admission"))
-            generate_barcode(data.get("admission"))
-
-            return redirect("/students")
-
-        except Exception as e:
-            print("🔥 ADD ERROR:", e)
-
-            if "duplicate key" in str(e):
-                return render_template("add_student.html", error="Admission number already exists")
-
-            return render_template("add_student.html", error=str(e))
+        conn.commit()
+        conn.close()
+        return redirect('/students')
 
     return render_template("add_student.html")
 
-@app.route("/students")
-def students():
-    try:
-        search = request.args.get("search", "")
-        class_filter = request.args.get("class", "")
-
-        query = "SELECT * FROM students WHERE 1=1"
-        params = []
-
-        if search:
-            query += " AND (LOWER(first_name) LIKE %s OR LOWER(last_name) LIKE %s OR LOWER(admission) LIKE %s)"
-            search_term = f"%{search.lower()}%"
-            params.extend([search_term, search_term, search_term])
-
-        if class_filter:
-            query += " AND class=%s"
-            params.append(class_filter)
-
-        query += " ORDER BY admission"
-
-        data = fetch_all(query, params)
-
-        return render_template("students.html", students=data)
-
-    except Exception as e:
-        return f"Students Error: {e}"
-
-@app.route("/edit/<int:id>", methods=["GET", "POST"])
+# EDIT STUDENT
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit_student(id):
-    if request.method == "POST":
-        try:
-            data = request.form
+    conn = get_connection()
+    cur = conn.cursor()
 
-            execute_query("""
-                UPDATE students SET
-                first_name=%s,
-                last_name=%s,
-                gender=%s,
-                dob=%s,
-                class=%s,
-                stream=%s,
-                parent=%s,
-                phone=%s
-                WHERE id=%s
-            """, (
-                data.get("first_name"),
-                data.get("last_name"),
-                data.get("gender"),
-                data.get("dob"),
-                data.get("class"),
-                data.get("stream"),
-                data.get("parent"),
-                data.get("phone"),
-                id
-            ))
+    if request.method == 'POST':
+        cur.execute("""
+            UPDATE students SET
+            admission=%s, first_name=%s, last_name=%s, gender=%s, dob=%s,
+            class=%s, stream=%s, parent=%s, phone=%s, photo=%s
+            WHERE id=%s
+        """, (
+            request.form['admission'],
+            request.form['first_name'],
+            request.form['last_name'],
+            request.form['gender'],
+            request.form['dob'],
+            request.form['class'],
+            request.form['stream'],
+            request.form['parent'],
+            request.form['phone'],
+            request.form['photo'],
+            id
+        ))
 
-            return redirect("/students")
+        conn.commit()
+        conn.close()
+        return redirect('/students')
 
-        except Exception as e:
-            return f"Edit Error: {e}"
+    cur.execute("SELECT * FROM students WHERE id=%s", (id,))
+    student = cur.fetchone()
+    conn.close()
 
-    student = fetch_one("SELECT * FROM students WHERE id=%s", (id,))
     return render_template("edit_student.html", student=student)
 
-@app.route("/id/<admission>")
-def generate_id(admission):
-    student = fetch_one("SELECT * FROM students WHERE admission=%s", (admission,))
+# DELETE
+@app.route('/delete/<int:id>')
+def delete_student(id):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM students WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect('/students')
 
-    if not student:
-        return "Student not found"
+# DASHBOARD
+@app.route('/dashboard')
+def dashboard():
+    conn = get_connection()
+    cur = conn.cursor()
 
-    return render_template("id_card.html", s=student)
+    cur.execute("SELECT COUNT(*) AS total FROM students")
+    total = cur.fetchone()['total']
 
-@app.route("/batch-print")
-def batch_print():
-    classes = fetch_all("SELECT DISTINCT class FROM students ORDER BY class")
-    return render_template("batch_print.html", classes=classes)
+    cur.execute("SELECT class, COUNT(*) AS count FROM students GROUP BY class")
+    class_data = cur.fetchall()
 
+    cur.execute("SELECT gender, COUNT(*) AS count FROM students GROUP BY gender")
+    gender_data = cur.fetchall()
 
-@app.route("/print-all")
-def print_all():
-    selected_class = request.args.get("class")
+    conn.close()
 
-    if selected_class:
-        students = fetch_all("SELECT * FROM students WHERE class=%s", (selected_class,))
-    else:
-        students = fetch_all("SELECT * FROM students")
-
-    return render_template("print_all.html", students=students, selected_class=selected_class)
-
-@app.route("/export-excel")
-def export_excel():
-    students = fetch_all("SELECT * FROM students")
-
-    df = pd.DataFrame(students)
-
-    output = io.BytesIO()
-    df.to_excel(output, index=False)
-
-    output.seek(0)
-
-    return send_file(
-        output,
-        download_name="students.xlsx",
-        as_attachment=True,
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return render_template(
+        "dashboard.html",
+        total_students=total,
+        class_data=class_data,
+        gender_data=gender_data
     )
 
-@app.route("/export-pdf")
+# EXPORT EXCEL
+@app.route('/export/excel')
+def export_excel():
+    conn = get_connection()
+    df = pd.read_sql("SELECT * FROM students", conn)
+    conn.close()
+
+    file_path = "students.xlsx"
+    df.to_excel(file_path, index=False)
+
+    return send_file(file_path, as_attachment=True)
+
+# EXPORT PDF
+@app.route('/export/pdf')
 def export_pdf():
-    students = fetch_all("SELECT * FROM students")
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM students")
+    students = cur.fetchall()
+    conn.close()
 
-    buffer = io.BytesIO()
-
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
-    elements = []
-
+    doc = SimpleDocTemplate("students.pdf")
     styles = getSampleStyleSheet()
 
-    data = []
-    row = []
+    content = []
+    for s in students:
+        content.append(Paragraph(f"{s['first_name']} {s['last_name']} - {s['class']}", styles['Normal']))
 
-    for i, s in enumerate(students, 1):
-        photo_path = f"static/student_photos/{s['photo']}" if s['photo'] else "static/default.png"
+    doc.build(content)
 
-        if not os.path.exists(photo_path):
-            photo_path = "static/default.png"
+    return send_file("students.pdf", as_attachment=True)
 
-        img = Image(photo_path, width=60, height=70)
+# QR CODE
+@app.route('/qr/<int:id>')
+def generate_qr(id):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM students WHERE id=%s", (id,))
+    student = cur.fetchone()
+    conn.close()
 
-        text = Paragraph(
-            f"<b>{s['first_name']} {s['last_name']}</b><br/>"
-            f"Adm: {s['admission']}<br/>"
-            f"{s['class']} {s.get('stream','')}",
-            styles["Normal"]
-        )
+    data = f"{student['first_name']} {student['last_name']} - {student['class']}"
 
-        cell = [img, text]
-        row.append(cell)
+    img = qrcode.make(data)
+    path = f"static/qr_{id}.png"
+    img.save(path)
 
-        if i % 3 == 0:
-            data.append(row)
-            row = []
+    return send_file(path, mimetype='image/png')
 
-    if row:
-        data.append(row)
-
-    table = Table(data)
-
-    table.setStyle(TableStyle([
-        ("GRID", (0, 0), (-1, -1), 1, colors.black),
-        ("PADDING", (0, 0), (-1, -1), 5),
-    ]))
-
-    elements.append(table)
-    doc.build(elements)
-
-    buffer.seek(0)
-
-    return send_file(
-        buffer,
-        download_name="id_cards.pdf",
-        as_attachment=True,
-        mimetype="application/pdf"
-    )
-
-# ================= RUN =================
-
+# RUN
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=True)
+    app.run(debug=True)
