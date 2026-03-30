@@ -1,10 +1,17 @@
 import os
+import pandas as pd
+from flask import send_file
+import io
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from flask import Flask, render_template, request, redirect, url_for
 import qrcode
 from reportlab.graphics.barcode.code128 import Code128
-
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+import os
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "secret123")
 
@@ -316,6 +323,82 @@ def print_all():
         students = fetch_all("SELECT * FROM students")
 
     return render_template("print_all.html", students=students, selected_class=selected_class)
+
+@app.route("/export-excel")
+def export_excel():
+    students = fetch_all("SELECT * FROM students")
+
+    df = pd.DataFrame(students)
+
+    output = io.BytesIO()
+    df.to_excel(output, index=False)
+
+    output.seek(0)
+
+    return send_file(
+        output,
+        download_name="students.xlsx",
+        as_attachment=True,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+@app.route("/export-pdf")
+def export_pdf():
+    students = fetch_all("SELECT * FROM students")
+
+    buffer = io.BytesIO()
+
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    elements = []
+
+    styles = getSampleStyleSheet()
+
+    data = []
+    row = []
+
+    for i, s in enumerate(students, 1):
+        photo_path = f"static/student_photos/{s['photo']}" if s['photo'] else "static/default.png"
+
+        if not os.path.exists(photo_path):
+            photo_path = "static/default.png"
+
+        img = Image(photo_path, width=60, height=70)
+
+        text = Paragraph(
+            f"<b>{s['first_name']} {s['last_name']}</b><br/>"
+            f"Adm: {s['admission']}<br/>"
+            f"{s['class']} {s.get('stream','')}",
+            styles["Normal"]
+        )
+
+        cell = [img, text]
+        row.append(cell)
+
+        if i % 3 == 0:
+            data.append(row)
+            row = []
+
+    if row:
+        data.append(row)
+
+    table = Table(data)
+
+    table.setStyle(TableStyle([
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("PADDING", (0, 0), (-1, -1), 5),
+    ]))
+
+    elements.append(table)
+    doc.build(elements)
+
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        download_name="id_cards.pdf",
+        as_attachment=True,
+        mimetype="application/pdf"
+    )
 
 # ================= RUN =================
 
