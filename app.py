@@ -1,49 +1,186 @@
 import os
-import io
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 import pandas as pd
 import qrcode
-from flask import Flask, render_template, request, redirect, send_file, url_for
-from reportlab.platypus import SimpleDocTemplate, Image, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Image, Spacer, Paragraph
+from reportlab.lib.pagesizes import A6
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import mm
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY") or "supersecretkey"
 
-DATABASE_URL = os.getenv("DATABASE_URL")  # Set your database URL
+DATABASE_URL = os.getenv("DATABASE_URL")
 
+# -------------------------
+# DATABASE CONNECTION
+# -------------------------
 def get_connection():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
-# HOME
-@app.route('/')
-def home():
-    return render_template("index.html")
+# -------------------------
+# LOGIN DECORATORS
+# -------------------------
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash("Please login first.", "warning")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
-# VIEW STUDENTS
+def super_admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('role') != 'super':
+            flash("Only main admin can access this page.", "danger")
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# -------------------------
+# AUTH ROUTES
+# -------------------------
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users WHERE username=%s", (username,))
+        user = cur.fetchone()
+        conn.close()
+
+        if user and check_password_hash(user['password_hash'], password):
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['role'] = user['role']
+            flash("Logged in successfully!", "success")
+            return redirect(url_for('dashboard'))
+        else:
+            flash("Invalid username or password", "danger")
+            return redirect(url_for('login'))
+
+    return render_template("login.html")
+
+@app.route('/logout')
+@login_required
+def logout():
+    session.clear()
+    flash("Logged out successfully!", "success")
+    return redirect(url_for('login'))
+
+@app.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        old_password = request.form['old_password']
+        new_password = request.form['new_password']
+
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users WHERE id=%s", (session['user_id'],))
+        user = cur.fetchone()
+
+        if not check_password_hash(user['password_hash'], old_password):
+            flash("Old password is incorrect!", "danger")
+            conn.close()
+            return redirect(url_for('change_password'))
+
+        new_hash = generate_password_hash(new_password)
+        cur.execute("UPDATE users SET password_hash=%s WHERE id=%s", (new_hash, session['user_id']))
+        conn.commit()
+        conn.close()
+
+        flash("Password changed successfully!", "success")
+        return redirect(url_for('dashboard'))
+
+    return render_template("change_password.html")
+
+@app.route('/add-coadmin', methods=['GET', 'POST'])
+@login_required
+@super_admin_required
+def add_coadmin():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) AS count FROM users WHERE role='admin'")
+    count = cur.fetchone()['count']
+    conn.close()
+
+    if count >= 1:
+        flash("Co-admin already exists. Only one allowed.", "warning")
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        password_hash = generate_password_hash(password)
+
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, 'admin')",
+            (username, password_hash)
+        )
+        conn.commit()
+        conn.close()
+
+        flash("Co-admin added successfully!", "success")
+        return redirect(url_for('dashboard'))
+
+    return render_template("add_coadmin.html")
+
+# -------------------------
+# DASHBOARD
+# -------------------------
+@app.route('/')
+@login_required
+def home():
+    return redirect(url_for('dashboard'))
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT COUNT(*) AS total FROM students")
+    total = cur.fetchone()['total']
+
+    cur.execute("SELECT class, COUNT(*) AS count FROM students GROUP BY class")
+    class_data = cur.fetchall()
+
+    cur.execute("SELECT gender, COUNT(*) AS count FROM students GROUP BY gender")
+    gender_data = cur.fetchall()
+
+    conn.close()
+
+    return render_template("dashboard.html",
+                           total_students=total,
+                           class_data=class_data,
+                           gender_data=gender_data)
+
+# -------------------------
+# STUDENT MANAGEMENT
+# -------------------------
 @app.route('/students')
+@login_required
 def students():
     conn = get_connection()
     cur = conn.cursor()
-    search = request.args.get('search', '')
-    class_filter = request.args.get('class', '')
-    query = "SELECT * FROM students WHERE 1=1"
-    params = []
-    if search:
-        query += " AND (first_name ILIKE %s OR last_name ILIKE %s OR admission ILIKE %s)"
-        params.extend([f"%{search}%", f"%{search}%", f"%{search}%"])
-    if class_filter:
-        query += " AND class=%s"
-        params.append(class_filter)
-    query += " ORDER BY id DESC"
-    cur.execute(query, params)
+    cur.execute("SELECT * FROM students ORDER BY id DESC")
     data = cur.fetchall()
     conn.close()
     return render_template("students.html", students=data)
 
-# ADD STUDENT
 @app.route('/add', methods=['GET', 'POST'])
+@login_required
 def add_student():
     if request.method == 'POST':
         conn = get_connection()
@@ -68,8 +205,8 @@ def add_student():
         return redirect('/students')
     return render_template("add_student.html")
 
-# EDIT STUDENT
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
 def edit_student(id):
     conn = get_connection()
     cur = conn.cursor()
@@ -101,8 +238,8 @@ def edit_student(id):
     conn.close()
     return render_template("edit_student.html", student=student)
 
-# DELETE STUDENT
 @app.route('/delete/<int:id>')
+@login_required
 def delete_student(id):
     conn = get_connection()
     cur = conn.cursor()
@@ -111,22 +248,11 @@ def delete_student(id):
     conn.close()
     return redirect('/students')
 
-# DASHBOARD
-@app.route('/dashboard')
-def dashboard():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) AS total FROM students")
-    total = cur.fetchone()['total']
-    cur.execute("SELECT class, COUNT(*) AS count FROM students GROUP BY class")
-    class_data = cur.fetchall()
-    cur.execute("SELECT gender, COUNT(*) AS count FROM students GROUP BY gender")
-    gender_data = cur.fetchall()
-    conn.close()
-    return render_template("dashboard.html", total_students=total, class_data=class_data, gender_data=gender_data)
-
-# VIEW SINGLE ID CARD
+# -------------------------
+# ID CARD VIEW & PRINT
+# -------------------------
 @app.route('/id_card/<int:id>')
+@login_required
 def id_card(id):
     conn = get_connection()
     cur = conn.cursor()
@@ -135,18 +261,21 @@ def id_card(id):
     conn.close()
     return render_template("id_card.html", student=student)
 
-# PRINT ALL / BATCH PRINT
-@app.route('/batch-print')
-def batch_print():
+@app.route('/print_all')
+@login_required
+def print_all():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM students ORDER BY class, first_name")
+    cur.execute("SELECT * FROM students")
     students = cur.fetchall()
     conn.close()
-    return render_template("batch_print.html", students=students)
+    return render_template("print_all.html", students=students)
 
+# -------------------------
 # EXPORT EXCEL
+# -------------------------
 @app.route('/export/excel')
+@login_required
 def export_excel():
     conn = get_connection()
     df = pd.read_sql("SELECT * FROM students", conn)
@@ -155,76 +284,67 @@ def export_excel():
     df.to_excel(file_path, index=False)
     return send_file(file_path, as_attachment=True)
 
-# EXPORT PDF (ID Cards layout)
+# -------------------------
+# EXPORT PDF (ID Cards Layout)
+# -------------------------
 @app.route('/export/pdf')
+@login_required
 def export_pdf():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM students ORDER BY class, first_name")
+    cur.execute("SELECT * FROM students")
     students = cur.fetchall()
     conn.close()
 
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=(100*mm, 150*mm), leftMargin=10, rightMargin=10, topMargin=10, bottomMargin=10)
+    doc = SimpleDocTemplate("students.pdf", pagesize=A6)
     styles = getSampleStyleSheet()
     elements = []
 
     for s in students:
-        # School Logo
-        try:
-            elements.append(Image("static/logo.png", width=40, height=40))
-        except:
-            pass
-
-        elements.append(Spacer(1, 4))
-
-        # Name
+        # STUDENT INFO
         elements.append(Paragraph(f"<b>{s['first_name']} {s['last_name']}</b>", styles['Title']))
         elements.append(Paragraph(f"Adm: {s['admission']}", styles['Normal']))
-        elements.append(Paragraph(f"{s['class']} {s['stream'] or ''}", styles['Normal']))
-        elements.append(Spacer(1, 4))
+        elements.append(Paragraph(f"Class: {s['class']} {s['stream'] or ''}", styles['Normal']))
 
-        # Photo
-        photo_path = f"static/student_photos/{s['photo'] or 'default.png'}"
+        # PHOTO
+        photo_path = s['photo'] or "static/default.png"
         try:
             elements.append(Image(photo_path, width=80, height=100))
         except:
             pass
 
-        # Barcode
+        # BARCODE
         barcode_path = f"static/barcodes/{s['admission']}.png"
         try:
-            elements.append(Image(barcode_path, width=80, height=30))
+            elements.append(Image(barcode_path, width=130, height=40))
         except:
             pass
 
-        # QR code
-        qr_path = f"static/qrcodes/{s['admission']}.png"
-        try:
-            elements.append(Image(qr_path, width=60, height=60))
-        except:
-            pass
-
-        elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 20))
 
     doc.build(elements)
-    buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name="students_id_cards.pdf", mimetype="application/pdf")
+    return send_file("students.pdf", as_attachment=True)
 
-# GENERATE QR CODE
+# -------------------------
+# QR CODE
+# -------------------------
 @app.route('/qr/<int:id>')
+@login_required
 def generate_qr(id):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("SELECT * FROM students WHERE id=%s", (id,))
     student = cur.fetchone()
     conn.close()
+
     data = f"{student['first_name']} {student['last_name']} - {student['class']}"
     img = qrcode.make(data)
     path = f"static/qrcodes/{student['admission']}.png"
     img.save(path)
     return send_file(path, mimetype='image/png')
 
-# RUN APP
+# -------------------------
+# RUN
+# -------------------------
 if __name__ == "__main__":
     app.run(debug=True)

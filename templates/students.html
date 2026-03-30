@@ -3,197 +3,59 @@
 <head>
   <title>Students</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       padding: 30px 20px;
     }
-
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    h2 {
-      color: white;
-      margin-bottom: 30px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h2 { color: white; margin-bottom: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
 
     .control-panel {
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      margin-bottom: 25px;
+      background: white; padding: 25px; border-radius: 12px; margin-bottom: 25px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
 
     .search-section {
-      display: grid;
-      grid-template-columns: 1fr 200px 1fr;
-      gap: 15px;
-      margin-bottom: 20px;
+      display: grid; grid-template-columns: 1fr 200px 1fr; gap: 15px; margin-bottom: 20px;
     }
 
-    input[type="text"], select {
-      padding: 12px;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      font-size: 1em;
-    }
+    input[type="text"], select { padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; }
+    input[type="text"]:focus, select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
 
-    input[type="text"]:focus, select:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .button-group {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
+    .button-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:10px; margin-bottom:15px; }
     .btn {
-      padding: 12px 20px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      text-decoration: none;
-      text-align: center;
-      transition: all 0.3s ease;
-      font-size: 0.95em;
-      color: white;
+      padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;
+      text-align: center; text-decoration: none; transition: all 0.3s ease; font-size: 0.95em;
     }
+    .btn-primary { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; }
+    .btn-secondary { background: linear-gradient(135deg,#f093fb 0%,#f5576c 100%); color:white; }
+    .btn-success { background: linear-gradient(135deg,#4facfe 0%,#00f2fe 100%); color:white; }
+    .btn-warning { background: linear-gradient(135deg,#fa709a 0%,#fee140 100%); color:white; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(0,0,0,0.3); }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
+    .table-container { background:white; border-radius:12px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,0.15);}
+    table { border-collapse: collapse; width: 100%; }
+    th { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; padding: 18px; font-weight:600; text-transform:uppercase; font-size:0.9em; }
+    td { border-bottom:1px solid #e0e0e0; padding: 15px 18px; color:#333; }
+    tr:hover { background: #f9f9f9; }
 
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-secondary {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-
-    .btn-secondary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 15px rgba(245, 87, 108, 0.4);
-    }
-
-    .btn-success {
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-
-    .btn-success:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 15px rgba(79, 172, 254, 0.4);
-    }
-
-    .btn-warning {
-      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-      color: #333;
-    }
-
-    .btn-warning:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 15px rgba(250, 112, 154, 0.4);
-    }
-
-    .table-container {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
-
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-
-    th {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 18px;
-      text-align: left;
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 0.9em;
-      letter-spacing: 0.5px;
-    }
-
-    td {
-      border-bottom: 1px solid #e0e0e0;
-      padding: 15px 18px;
-      color: #333;
-    }
-
-    tr:hover {
-      background: #f9f9f9;
-    }
-
-    img {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 3px solid #667eea;
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 8px;
-    }
-
-    .action-btn {
-      padding: 6px 12px;
-      font-size: 0.85em;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s ease;
-      color: white;
-    }
-
-    .edit-btn { background: #4facfe; }
-    .edit-btn:hover { background: #0080ff; }
-
-    .id-btn { background: #667eea; }
-    .id-btn:hover { background: #5568d3; }
-
-    .delete-btn { background: #f5576c; }
-    .delete-btn:hover { background: #d63447; }
-
+    img { width:50px; height:50px; border-radius:50%; object-fit:cover; border:3px solid #667eea; }
+    .action-buttons { display:flex; gap:8px; }
+    .action-btn { padding:6px 12px; font-size:0.85em; border:none; border-radius:5px; cursor:pointer; color:white; transition: all 0.2s ease; }
+    .edit-btn { background:#4facfe; }
+    .edit-btn:hover { background:#0080ff; transform:scale(1.05); }
+    .id-btn { background:#667eea; }
+    .id-btn:hover { background:#5568d3; transform:scale(1.05); }
+    .delete-btn { background:#f5576c; }
+    .delete-btn:hover { background:#d63447; transform:scale(1.05); }
     .back-btn {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 12px 25px;
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      color: white;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-      transition: all 0.3s ease;
+      display:inline-block; margin-top:20px; padding:12px 25px; background: linear-gradient(135deg,#f093fb 0%,#f5576c 100%);
+      color:white; text-decoration:none; border-radius:8px; font-weight:bold; transition: all 0.3s ease;
     }
-
-    .back-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
-    }
+    .back-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(245,87,108,0.4);}
   </style>
 </head>
 
@@ -203,28 +65,29 @@
   <h2>👥 Student Management</h2>
 
   <div class="control-panel">
-
-    <form method="GET" action="/students">
-      <div class="search-section">
-        <input type="text" name="search" placeholder="Search by Name or Admission" value="{{ request.args.get('search', '') }}">
-        <select name="class">
-          <option value="">All Classes</option>
-          {% for c in ['S1','S2','S3','S4','S5','S6'] %}
-          <option value="{{ c }}" {% if request.args.get('class') == c %}selected{% endif %}>{{ c }}</option>
-          {% endfor %}
-        </select>
-        <button type="submit" class="btn btn-primary">🔍 Search</button>
-      </div>
+    <form method="GET" action="/students" class="search-section">
+      <input type="text" name="search" placeholder="Search by Name or Admission Number" value="{{ request.args.get('search', '') }}">
+      <select name="class">
+        <option value="">All Classes</option>
+        {% for c in ['S1','S2','S3','S4','S5','S6'] %}
+        <option {% if request.args.get('class') == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary">🔍 Search</button>
     </form>
 
     <div class="button-group">
       <a href="/add" class="btn btn-secondary">➕ Add Student</a>
       <a href="/batch-print" class="btn btn-success">🖨️ Print IDs</a>
-      <a href="/dashboard" class="btn btn-primary">🏠 Dashboard</a>
-      <a href="/export/excel" class="btn btn-warning">📊 Export Excel</a>
-      <a href="/export/pdf" class="btn btn-warning">📄 Export PDF</a>
+      <a href="/promote" class="btn btn-warning" onclick="return confirm('Promote all students to next class?')">⬆️ Promote Class</a>
+      <a href="/" class="btn btn-primary">🏠 Dashboard</a>
     </div>
 
+    <div class="button-group">
+      <a href="/export/excel" class="btn btn-success">📊 Export Excel</a>
+      <a href="/export/pdf" class="btn btn-primary">📄 Export PDF</a>
+      <a href="/print_all" class="btn btn-warning">🖨️ Print All ID Cards</a>
+    </div>
   </div>
 
   <div class="table-container">
@@ -238,24 +101,21 @@
         <th>Phone</th>
         <th>Actions</th>
       </tr>
+
       {% for s in students %}
       <tr>
         <td>
-          <img src="{{ url_for('static', filename='student_photos/' + (s.photo or 'default.png')) }}" alt="Photo">
+          <img src="{{ url_for('static', filename='student_photos/' + (s.photo or 'default.png')) }}">
         </td>
         <td><strong>{{ s.admission }}</strong></td>
         <td>{{ s.first_name }} {{ s.last_name }}</td>
-        <td>
-          <span style="background: #667eea; color: white; padding: 4px 8px; border-radius: 4px;">
-            {{ s.class }}
-          </span>
-        </td>
-        <td>{{ s.stream or '' }}</td>
+        <td>{{ s.class }}</td>
+        <td>{{ s.stream }}</td>
         <td>{{ s.phone }}</td>
         <td>
           <div class="action-buttons">
             <a href="/edit/{{ s.id }}" class="action-btn edit-btn">✏️ Edit</a>
-            <a href="/id_card/{{ s.id }}" class="action-btn id-btn">🪪 View ID</a>
+            <a href="/id_card/{{ s.id }}" class="action-btn id-btn">🎫 Card</a>
             <a href="/delete/{{ s.id }}" class="action-btn delete-btn" onclick="return confirm('Delete this student?')">🗑️ Delete</a>
           </div>
         </td>
@@ -265,7 +125,6 @@
   </div>
 
   <a href="/" class="back-btn">← Back to Dashboard</a>
-
 </div>
 </body>
 </html>
