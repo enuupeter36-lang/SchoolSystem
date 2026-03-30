@@ -1,6 +1,6 @@
+import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import os
 import pandas as pd
 import qrcode
 from reportlab.platypus import SimpleDocTemplate, Paragraph
