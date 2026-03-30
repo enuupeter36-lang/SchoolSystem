@@ -300,6 +300,23 @@ def generate_id(admission):
 
     return render_template("id_card.html", s=student)
 
+@app.route("/batch-print")
+def batch_print():
+    classes = fetch_all("SELECT DISTINCT class FROM students ORDER BY class")
+    return render_template("batch_print.html", classes=classes)
+
+
+@app.route("/print-all")
+def print_all():
+    selected_class = request.args.get("class")
+
+    if selected_class:
+        students = fetch_all("SELECT * FROM students WHERE class=%s", (selected_class,))
+    else:
+        students = fetch_all("SELECT * FROM students")
+
+    return render_template("print_all.html", students=students, selected_class=selected_class)
+
 # ================= RUN =================
 
 if __name__ == "__main__":
