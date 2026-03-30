@@ -1,7 +1,9 @@
 charset-normalizer==3.4.6
 et_xmlfile==2.0.0
+gunicorn==25.3.0
 numpy==2.4.4
 openpyxl==3.1.5
+packaging==26.0
 pandas==3.0.1
 pillow==12.1.1
 python-dateutil==2.9.0.post0
