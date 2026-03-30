@@ -20,8 +20,9 @@ body {
   background: white;
 }
 
-img {
-  border-radius: 6px;
+.logo {
+  width: 60px;
+  margin-bottom: 5px;
 }
 
 .photo {
@@ -64,6 +65,9 @@ img {
 
 <div class="card">
 
+  <!-- ✅ LOGO -->
+  <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
+
   <h3>LOLACHAT SEED<br>SECONDARY SCHOOL</h3>
 
   <img src="{{ url_for('static', filename='student_photos/' + (s.photo or 'default.png')) }}" class="photo">
@@ -75,9 +79,7 @@ img {
   <p><b>Stream:</b> {{ s.stream or '-' }}</p>
 
   <img src="{{ url_for('static', filename='barcodes/' + s.admission + '.png') }}" class="barcode">
-
   <br>
-
   <img src="{{ url_for('static', filename='qrcodes/' + s.admission + '.png') }}" class="qr">
 
 </div>

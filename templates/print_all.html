@@ -25,6 +25,11 @@ body {
   page-break-inside: avoid;
 }
 
+.logo {
+  width: 40px;
+  margin-bottom: 5px;
+}
+
 .photo {
   width: 80px;
   height: 100px;
@@ -80,6 +85,9 @@ body {
 
 <div class="card">
 
+  <!-- ✅ LOGO -->
+  <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
+
   <div class="top">LOLACHAT SEED S.S</div>
 
   <img src="{{ url_for('static', filename='student_photos/' + (s.photo or 'default.png')) }}" class="photo">
@@ -90,9 +98,7 @@ body {
   <div>{{ s.class }} {{ s.stream or '' }}</div>
 
   <img src="{{ url_for('static', filename='barcodes/' + s.admission + '.png') }}" class="barcode">
-
   <br>
-
   <img src="{{ url_for('static', filename='qrcodes/' + s.admission + '.png') }}" class="qr">
 
 </div>
