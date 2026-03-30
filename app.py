@@ -58,6 +58,17 @@ def add_student():
 
     return render_template("add_student.html")
 
+# ID card
+@app.route('/id_card/<int:id>')
+def id_card(id):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM students WHERE id=%s", (id,))
+    student = cur.fetchone()
+    conn.close()
+
+    return render_template("id_card.html", student=student)
+
 # EDIT STUDENT
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit_student(id):
@@ -128,6 +139,17 @@ def dashboard():
         gender_data=gender_data
     )
 
+# print all ID cards
+@app.route('/print_all')
+def print_all():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM students")
+    students = cur.fetchall()
+    conn.close()
+
+    return render_template("print_all.html", students=students)
+
 # EXPORT EXCEL
 @app.route('/export/excel')
 def export_excel():
@@ -141,6 +163,9 @@ def export_excel():
     return send_file(file_path, as_attachment=True)
 
 # EXPORT PDF
+from reportlab.platypus import SimpleDocTemplate, Image, Spacer, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+
 @app.route('/export/pdf')
 def export_pdf():
     conn = get_connection()
@@ -152,11 +177,22 @@ def export_pdf():
     doc = SimpleDocTemplate("students.pdf")
     styles = getSampleStyleSheet()
 
-    content = []
-    for s in students:
-        content.append(Paragraph(f"{s['first_name']} {s['last_name']} - {s['class']}", styles['Normal']))
+    elements = []
 
-    doc.build(content)
+    for s in students:
+        elements.append(Paragraph(f"{s['first_name']} {s['last_name']}", styles['Title']))
+        elements.append(Paragraph(f"Class: {s['class']}", styles['Normal']))
+
+        # ADD PHOTO
+        if s['photo']:
+            try:
+                elements.append(Image(s['photo'], width=100, height=100))
+            except:
+                pass
+
+        elements.append(Spacer(1, 20))
+
+    doc.build(elements)
 
     return send_file("students.pdf", as_attachment=True)
 
