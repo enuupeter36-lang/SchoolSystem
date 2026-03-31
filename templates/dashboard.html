@@ -1,43 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <title>Dashboard</title>
 
 <style>
 body {
-  font-family: Arial;
-  background: #f4f4f4;
-  padding: 20px;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #333;
 }
 
 .container {
-  max-width: 900px;
-  margin: auto;
-  background: white;
-  padding: 20px;
+  max-width: 1100px;
+  margin: 40px auto;
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+h1 {
+  text-align: center;
+  color: #444;
+}
+
+.stats {
+  text-align: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.buttons {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.buttons a {
+  text-decoration: none;
+}
+
+button {
+  padding: 10px 18px;
+  margin: 6px;
+  border: none;
+  border-radius: 6px;
+  background: #667eea;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #5a67d8;
+}
+
+.table-box {
+  margin-top: 20px;
+}
+
+h2 {
+  margin-top: 30px;
+  color: #555;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 20px;
+  margin-top: 10px;
 }
 
-th, td {
-  border: 1px solid #ddd;
+th {
+  background: #667eea;
+  color: white;
   padding: 10px;
+}
+
+td {
+  padding: 10px;
+  border: 1px solid #ddd;
   text-align: center;
 }
 
-button {
-  padding: 10px;
-  background: #667eea;
-  color: white;
-  border: none;
-  margin: 5px;
+tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 25px;
+}
+
+.logout {
+  background: crimson;
+}
+
+.logout:hover {
+  background: darkred;
 }
 </style>
-
 </head>
 
 <body>
@@ -46,37 +109,59 @@ button {
 
 <h1>📊 Dashboard</h1>
 
-<h3>Total Students: {{ total_students }}</h3>
+<div class="stats">
+  <strong>Total Students:</strong> {{ total_students }}
+</div>
 
-<a href="/export/excel"><button>Export Excel</button></a>
-<a href="/export/pdf"><button>Export PDF</button></a>
-<a href="/batch-print"><button>Print ID Cards</button></a>
+<!-- ACTION BUTTONS -->
+<div class="buttons">
+  <a href="/students"><button>👨‍🎓 View Students</button></a>
+  <a href="/add"><button>➕ Add Student</button></a>
+  <a href="/batch-print"><button>🪪 Print ID Cards</button></a>
+  <a href="/export/excel"><button>📊 Export Excel</button></a>
+  <a href="/export/pdf"><button>📄 Export PDF</button></a>
+</div>
 
+<!-- CLASS TABLE -->
+<div class="table-box">
 <h2>Students per Class</h2>
 <table>
-<tr><th>Class</th><th>Count</th></tr>
+<tr>
+  <th>Class</th>
+  <th>Count</th>
+</tr>
 
 {% for row in class_data %}
 <tr>
-<td>{{ row.class }}</td>
-<td>{{ row.count }}</td>
+  <td>{{ row.class }}</td>
+  <td>{{ row.count }}</td>
 </tr>
 {% endfor %}
 </table>
+</div>
 
+<!-- GENDER TABLE -->
+<div class="table-box">
 <h2>Gender Distribution</h2>
 <table>
-<tr><th>Gender</th><th>Count</th></tr>
+<tr>
+  <th>Gender</th>
+  <th>Count</th>
+</tr>
 
 {% for row in gender_data %}
 <tr>
-<td>{{ row.gender }}</td>
-<td>{{ row.count }}</td>
+  <td>{{ row.gender }}</td>
+  <td>{{ row.count }}</td>
 </tr>
 {% endfor %}
 </table>
+</div>
 
-<a href="/">← Back Home</a>
+<!-- FOOTER -->
+<div class="footer">
+  <a href="/logout"><button class="logout">🚪 Logout</button></a>
+</div>
 
 </div>
 
