@@ -1,11 +1,10 @@
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
+from flask import Flask, render_template, request, redirect, session, flash, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import pandas as pd
-import qrcode
 from io import BytesIO
 
 from reportlab.platypus import SimpleDocTemplate, Image, Spacer, Paragraph
@@ -24,12 +23,13 @@ def get_connection():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 # -------------------------
-# INIT DB
+# INIT DB (FULL AUTO)
 # -------------------------
 def init_db():
     conn = get_connection()
     cur = conn.cursor()
 
+    # USERS TABLE
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -37,6 +37,19 @@ def init_db():
         password_hash TEXT,
         role TEXT DEFAULT 'admin',
         must_change_password BOOLEAN DEFAULT FALSE
+    )
+    """)
+
+    # STUDENTS TABLE
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS students (
+        id SERIAL PRIMARY KEY,
+        first_name TEXT,
+        last_name TEXT,
+        admission TEXT,
+        class TEXT,
+        gender TEXT,
+        photo TEXT
     )
     """)
 
@@ -61,7 +74,7 @@ def create_default_admin():
     conn.close()
 
 # -------------------------
-# AUTH DECORATOR
+# AUTH
 # -------------------------
 def login_required(f):
     @wraps(f)
@@ -77,7 +90,7 @@ def must_change():
     cur.execute("SELECT must_change_password FROM users WHERE id=%s", (session['user_id'],))
     result = cur.fetchone()
     conn.close()
-    return result['must_change_password']
+    return result and result['must_change_password']
 
 # -------------------------
 # LOGIN
@@ -145,7 +158,7 @@ def dashboard():
     cur = conn.cursor()
 
     cur.execute("SELECT COUNT(*) AS total FROM students")
-    total = cur.fetchone()['total']
+    total = cur.fetchone()['total'] or 0
 
     cur.execute("SELECT class, COUNT(*) AS count FROM students GROUP BY class")
     class_data = cur.fetchall()
@@ -161,7 +174,59 @@ def dashboard():
                            gender_data=gender_data)
 
 # -------------------------
-# STUDENTS + SEARCH
+# ADD STUDENT (FIXED)
+# -------------------------
+@app.route('/add-student', methods=['POST'])
+@login_required
+def add_student():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+    INSERT INTO students (first_name, last_name, admission, class, gender)
+    VALUES (%s,%s,%s,%s,%s)
+    """, (
+        request.form['first_name'],
+        request.form['last_name'],
+        request.form['admission'],
+        request.form['class'],
+        request.form['gender']
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return redirect('/students')
+
+# -------------------------
+# EDIT STUDENT (FIXED)
+# -------------------------
+@app.route('/edit-student/<int:id>', methods=['POST'])
+@login_required
+def edit_student(id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+    UPDATE students
+    SET first_name=%s, last_name=%s, admission=%s, class=%s, gender=%s
+    WHERE id=%s
+    """, (
+        request.form['first_name'],
+        request.form['last_name'],
+        request.form['admission'],
+        request.form['class'],
+        request.form['gender'],
+        id
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return redirect('/students')
+
+# -------------------------
+# STUDENTS LIST
 # -------------------------
 @app.route('/students')
 @login_required
@@ -169,119 +234,27 @@ def students():
     conn = get_connection()
     cur = conn.cursor()
 
-    search = request.args.get('search')
-    class_filter = request.args.get('class')
-
-    query = "SELECT * FROM students WHERE 1=1"
-    params = []
-
-    if search:
-        query += " AND (first_name ILIKE %s OR last_name ILIKE %s OR admission ILIKE %s)"
-        params += [f"%{search}%", f"%{search}%", f"%{search}%"]
-
-    if class_filter:
-        query += " AND class=%s"
-        params.append(class_filter)
-
-    query += " ORDER BY id DESC"
-
-    cur.execute(query, params)
+    cur.execute("SELECT * FROM students ORDER BY id DESC")
     students = cur.fetchall()
+
     conn.close()
 
     return render_template("students.html", students=students)
 
 # -------------------------
-# PROMOTE
-# -------------------------
-def next_class(c):
-    classes = ["S1","S2","S3","S4","S5","S6"]
-    if c in classes:
-        idx = classes.index(c)
-        return classes[min(idx+1, len(classes)-1)]
-    return c
-
-@app.route('/promote/<int:id>')
-@login_required
-def promote(id):
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("SELECT class FROM students WHERE id=%s", (id,))
-    student = cur.fetchone()
-
-    new_class = next_class(student['class'])
-
-    cur.execute("UPDATE students SET class=%s WHERE id=%s", (new_class, id))
-
-    conn.commit()
-    conn.close()
-
-    return redirect('/students')
-
-@app.route('/promote')
-@login_required
-def promote_all():
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("SELECT id, class FROM students")
-    students = cur.fetchall()
-
-    for s in students:
-        new_class = next_class(s['class'])
-        cur.execute("UPDATE students SET class=%s WHERE id=%s", (new_class, s['id']))
-
-    conn.commit()
-    conn.close()
-
-    return redirect('/students')
-
-# -------------------------
-# ID CARDS
-# -------------------------
-@app.route('/id_card/<int:id>')
-@login_required
-def id_card(id):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM students WHERE id=%s", (id,))
-    student = cur.fetchone()
-    conn.close()
-
-    return render_template("id_card.html", student=student)
-
-@app.route('/batch-print')
-@login_required
-def batch_print():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM students")
-    students = cur.fetchall()
-    conn.close()
-
-    return render_template("batch_print.html", students=students)
-
-@app.route('/print_all')
-@login_required
-def print_all():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM students")
-    students = cur.fetchall()
-    conn.close()
-
-    return render_template("print_all.html", students=students)
-
-# -------------------------
-# EXPORT EXCEL
+# EXPORT EXCEL (FIXED)
 # -------------------------
 @app.route('/export/excel')
 @login_required
 def export_excel():
     conn = get_connection()
-    df = pd.read_sql("SELECT * FROM students", conn)
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM students")
+    data = cur.fetchall()
     conn.close()
+
+    df = pd.DataFrame(data)
 
     output = BytesIO()
     df.to_excel(output, index=False)
@@ -292,7 +265,7 @@ def export_excel():
                      as_attachment=True)
 
 # -------------------------
-# EXPORT PDF (FIXED)
+# EXPORT PDF
 # -------------------------
 @app.route('/export/pdf')
 @login_required
@@ -311,12 +284,6 @@ def export_pdf():
     for s in students:
         elements.append(Paragraph(f"<b>{s['first_name']} {s['last_name']}</b>", styles['Title']))
         elements.append(Paragraph(f"Class: {s['class']}", styles['Normal']))
-        elements.append(Spacer(1, 10))
-
-        photo_path = f"static/student_photos/{s['photo']}" if s['photo'] else None
-        if photo_path and os.path.exists(photo_path):
-            elements.append(Image(photo_path, width=80, height=100))
-
         elements.append(Spacer(1, 10))
 
     doc.build(elements)
