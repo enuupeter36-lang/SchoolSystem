@@ -24,13 +24,20 @@
 <body>
   <div class="card">
     <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
+
     <div class="school-name">LOLACHAT SEED S.S</div>
-    <img src="{{ url_for('static', filename='student_photos/' + (student.photo or 'default.png')) }}" class="photo">
+
+    <!-- Student Photo -->
+    <img src="{{ url_for('static', filename='student_photos/' + (student.photo or 'default.png')) }}" class="photo" onerror="this.src='{{ url_for('static', filename='default.png') }}'">
+
     <div class="info"><b>{{ student.first_name }} {{ student.last_name }}</b></div>
     <div class="info">Adm: {{ student.admission }}</div>
     <div class="info">{{ student.class }} {{ student.stream or '' }}</div>
-    <img src="{{ url_for('static', filename='barcodes/' + student.admission + '.png') }}" class="barcode">
-    <img src="{{ url_for('static', filename='qrcodes/' + student.admission + '.png') }}" class="qr">
+
+    <!-- Barcode & QR -->
+    <img src="{{ url_for('static', filename='barcodes/' + student.admission + '.png') }}" class="barcode" onerror="this.src='{{ url_for('static', filename='default.png') }}'">
+    <img src="{{ url_for('static', filename='qrcodes/' + student.admission + '.png') }}" class="qr" onerror="this.src='{{ url_for('static', filename='default.png') }}'">
+
     <a href="/students" class="back-btn">← Back to Students</a>
   </div>
 </body>

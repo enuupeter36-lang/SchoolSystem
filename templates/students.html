@@ -2,145 +2,45 @@
 <html>
 <head>
   <title>Students</title>
-
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      min-height: 100vh;
-      padding: 30px 20px;
-    }
-
-    .container {
-      max-width: 1400px;
-      margin: auto;
-    }
-
-    h2 {
-      color: white;
-      margin-bottom: 25px;
-    }
-
-    .control-panel {
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      margin-bottom: 25px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
-
-    .search-section {
-      display: grid;
-      grid-template-columns: 1fr 200px 150px;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
-    input, select {
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    .btn {
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      color: white;
-      font-size: 14px;
-    }
-
-    .btn-primary { background: #667eea; }
-    .btn-success { background: #28a745; }
-    .btn-warning { background: orange; }
-    .btn-danger { background: crimson; }
-
-    .btn:hover {
-      opacity: 0.9;
-    }
-
-    .button-group {
-      margin-top: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .table-container {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th {
-      background: #667eea;
-      color: white;
-      padding: 12px;
-    }
-
-    td {
-      padding: 10px;
-      border-bottom: 1px solid #eee;
-      text-align: center;
-    }
-
-    tr:hover {
-      background: #f9f9f9;
-    }
-
-    img {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid #667eea;
-    }
-
-    .actions a {
-      margin: 2px;
-      display: inline-block;
-    }
-
-    .back-btn {
-      margin-top: 20px;
-      display: inline-block;
-      background: #333;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 6px;
-      text-decoration: none;
-    }
-
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:linear-gradient(135deg,#667eea,#764ba2); padding:30px; }
+    .container { max-width:1400px; margin:auto; }
+    h2 { color:white; margin-bottom:25px; }
+    .control-panel { background:white; padding:25px; border-radius:12px; margin-bottom:25px; box-shadow:0 8px 20px rgba(0,0,0,0.15); }
+    .search-section { display:grid; grid-template-columns:1fr 200px 150px; gap:10px; margin-bottom:15px; }
+    input, select { padding:10px; border-radius:6px; border:1px solid #ccc; }
+    .btn { padding:10px; border:none; border-radius:6px; cursor:pointer; color:white; font-size:14px; }
+    .btn-primary { background:#667eea; }
+    .btn-success { background:#28a745; }
+    .btn-warning { background:orange; }
+    .btn-danger { background:crimson; }
+    .btn:hover { opacity:0.9; }
+    .button-group { margin-top:10px; display:flex; flex-wrap:wrap; gap:10px; }
+    .table-container { background:white; border-radius:12px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,0.15); }
+    table { width:100%; border-collapse:collapse; }
+    th { background:#667eea; color:white; padding:12px; }
+    td { padding:10px; border-bottom:1px solid #eee; text-align:center; }
+    tr:hover { background:#f9f9f9; }
+    img { width:50px; height:50px; border-radius:50%; object-fit:cover; border:2px solid #667eea; }
+    .actions a { margin:2px; display:inline-block; }
+    .back-btn { margin-top:20px; display:inline-block; background:#333; color:white; padding:10px 20px; border-radius:6px; text-decoration:none; }
   </style>
 </head>
-
 <body>
-
 <div class="container">
-
   <h2>👥 Student Management</h2>
 
-  <!-- SEARCH -->
   <div class="control-panel">
+    <!-- SEARCH -->
     <form method="GET" action="/students" class="search-section">
       <input type="text" name="search" placeholder="Search by Name or Admission" value="{{ request.args.get('search','') }}">
-
       <select name="class">
         <option value="">All Classes</option>
         {% for c in ['S1','S2','S3','S4','S5','S6'] %}
         <option value="{{ c }}" {% if request.args.get('class') == c %}selected{% endif %}>{{ c }}</option>
         {% endfor %}
       </select>
-
       <button type="submit" class="btn btn-primary">🔍 Search</button>
     </form>
 
@@ -169,40 +69,35 @@
         <th>Admission</th>
         <th>Name</th>
         <th>Class</th>
-        <th>Stream</th>
+        <th>Gender</th>
+        <th>DOB</th>
+        <th>Parent</th>
         <th>Phone</th>
         <th>Actions</th>
       </tr>
 
       {% for s in students %}
       <tr>
-        <td>
-          <img src="{{ url_for('static', filename='student_photos/' + (s.photo or 'default.png')) }}">
-        </td>
-
-        <td><strong>{{ s.admission }}</strong></td>
+        <td><img src="{{ url_for('static', filename='student_photos/' + (s.photo or 'default.png')) }}"></td>
+        <td>{{ s.admission }}</td>
         <td>{{ s.first_name }} {{ s.last_name }}</td>
-        <td>{{ s.class }}</td>
-        <td>{{ s.stream }}</td>
+        <td>{{ s.class }} {{ s.stream or '' }}</td>
+        <td>{{ s.gender }}</td>
+        <td>{{ s.dob }}</td>
+        <td>{{ s.parent }}</td>
         <td>{{ s.phone }}</td>
-
         <td class="actions">
           <a href="/edit/{{ s.id }}"><button class="btn btn-primary">✏️</button></a>
           <a href="/id_card/{{ s.id }}"><button class="btn btn-success">🎫</button></a>
           <a href="/promote/{{ s.id }}"><button class="btn btn-warning">⬆️</button></a>
-          <a href="/delete/{{ s.id }}" onclick="return confirm('Delete student?')">
-            <button class="btn btn-danger">🗑️</button>
-          </a>
+          <a href="/delete/{{ s.id }}" onclick="return confirm('Delete student?')"><button class="btn btn-danger">🗑️</button></a>
         </td>
       </tr>
       {% endfor %}
-
     </table>
   </div>
 
   <a href="/" class="back-btn">← Back to Dashboard</a>
-
 </div>
-
 </body>
 </html>

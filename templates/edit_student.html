@@ -19,37 +19,11 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
 
-    h2 {
-      color: #667eea;
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: #333;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      font-size: 1em;
-      transition: all 0.3s ease;
-    }
-
-    input:focus, select:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234,0.2);
-    }
+    h2 { color: #667eea; text-align: center; margin-bottom: 30px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: all 0.3s ease; }
+    input:focus, select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234,0.2); }
 
     .btn {
       width: 100%;
@@ -64,11 +38,7 @@
       transition: all 0.3s ease;
       margin-top: 10px;
     }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(255,152,0,0.4);
-    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,152,0,0.4); }
 
     .back-btn {
       display: inline-block;
@@ -83,11 +53,7 @@
       margin-top: 10px;
       transition: all 0.3s ease;
     }
-
-    .back-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(245,87,108,0.4);
-    }
+    .back-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(245,87,108,0.4); }
   </style>
 </head>
 <body>
@@ -95,7 +61,7 @@
 <div class="container">
   <h2>✏️ Edit Student</h2>
 
-  <form method="POST" enctype="multipart/form-data">
+  <form method="POST" action="/edit/{{ student.id }}" enctype="multipart/form-data">
     <div class="form-group">
       <label>Admission Number *</label>
       <input type="text" name="admission" value="{{ student.admission }}" required>

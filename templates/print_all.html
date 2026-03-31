@@ -26,13 +26,16 @@
   {% for s in students %}
   <div class="card">
     <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
+
     <div class="school-name">LOLACHAT SEED S.S</div>
-    <img src="{{ url_for('static', filename='student_photos/' + (s.photo or 'default.png')) }}" class="photo">
+
+    <img src="{{ url_for('static', filename='student_photos/' + (s.photo or 'default.png')) }}" class="photo" onerror="this.src='{{ url_for('static', filename='default.png') }}'">
     <div><b>{{ s.first_name }} {{ s.last_name }}</b></div>
     <div>Adm: {{ s.admission }}</div>
     <div>{{ s.class }} {{ s.stream or '' }}</div>
-    <img src="{{ url_for('static', filename='barcodes/' + s.admission + '.png') }}" class="barcode">
-    <img src="{{ url_for('static', filename='qrcodes/' + s.admission + '.png') }}" class="qr">
+
+    <img src="{{ url_for('static', filename='barcodes/' + s.admission + '.png') }}" class="barcode" onerror="this.src='{{ url_for('static', filename='default.png') }}'">
+    <img src="{{ url_for('static', filename='qrcodes/' + s.admission + '.png') }}" class="qr" onerror="this.src='{{ url_for('static', filename='default.png') }}'">
   </div>
   {% endfor %}
 </div>
