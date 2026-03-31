@@ -10,7 +10,7 @@
     .control-panel { background:white; padding:25px; border-radius:12px; margin-bottom:25px; box-shadow:0 8px 20px rgba(0,0,0,0.15); }
     .search-section { display:grid; grid-template-columns:1fr 200px 150px; gap:10px; margin-bottom:15px; }
     input, select { padding:10px; border-radius:6px; border:1px solid #ccc; }
-    .btn { padding:10px; border:none; border-radius:6px; cursor:pointer; color:white; font-size:14px; }
+    .btn { padding:10px; border:none; border-radius:6px; cursor:pointer; color:white; font-size:14px; text-decoration:none; text-align:center; display:inline-block; }
     .btn-primary { background:#667eea; }
     .btn-success { background:#28a745; }
     .btn-warning { background:orange; }
@@ -24,7 +24,7 @@
     tr:hover { background:#f9f9f9; }
     img { width:50px; height:50px; border-radius:50%; object-fit:cover; border:2px solid #667eea; }
     .actions a { margin:2px; display:inline-block; }
-    .back-btn { margin-top:20px; display:inline-block; background:#333; color:white; padding:10px 20px; border-radius:6px; text-decoration:none; }
+    .back-btn { margin-top:20px; display:inline-block; background:#333; color:white; padding:10px 20px; border-radius:6px; text-decoration:none; text-align:center; }
   </style>
 </head>
 <body>
@@ -46,18 +46,16 @@
 
     <!-- BUTTONS -->
     <div class="button-group">
-      <a href="/add"><button class="btn btn-primary">➕ Add</button></a>
-      <a href="/batch-print"><button class="btn btn-success">🪪 Print IDs</button></a>
-      <a href="/promote" onclick="return confirm('Promote all students?')">
-        <button class="btn btn-warning">⬆️ Promote</button>
-      </a>
-      <a href="/"><button class="btn btn-primary">🏠 Dashboard</button></a>
+      <a href="/add" class="btn btn-primary">➕ Add</a>
+      <a href="/batch-print" class="btn btn-success">🪪 Print IDs</a>
+      <a href="/promote" class="btn btn-warning" onclick="return confirm('Promote all students?')">⬆️ Promote</a>
+      <a href="/" class="btn btn-primary">🏠 Dashboard</a>
     </div>
 
     <div class="button-group">
-      <a href="/export/excel"><button class="btn btn-success">📊 Excel</button></a>
-      <a href="/export/pdf"><button class="btn btn-primary">📄 PDF</button></a>
-      <a href="/print_all"><button class="btn btn-warning">🖨️ Print All</button></a>
+      <a href="/export/excel" class="btn btn-success">📊 Excel</a>
+      <a href="/export/pdf" class="btn btn-primary">📄 PDF</a>
+      <a href="/print_all" class="btn btn-warning">🖨️ Print All</a>
     </div>
   </div>
 
@@ -81,16 +79,16 @@
         <td><img src="{{ url_for('static', filename='student_photos/' + (s.photo or 'default.png')) }}"></td>
         <td>{{ s.admission }}</td>
         <td>{{ s.first_name }} {{ s.last_name }}</td>
-        <td>{{ s.class }} {{ s.stream or '' }}</td>
-        <td>{{ s.gender }}</td>
-        <td>{{ s.dob }}</td>
-        <td>{{ s.parent }}</td>
-        <td>{{ s.phone }}</td>
+        <td>{{ s.class }} {% if s.stream %}{{ s.stream }}{% endif %}</td>
+        <td>{{ s.gender or '-' }}</td>
+        <td>{{ s.dob or '-' }}</td>
+        <td>{{ s.parent or '-' }}</td>
+        <td>{{ s.phone or '-' }}</td>
         <td class="actions">
-          <a href="/edit/{{ s.id }}"><button class="btn btn-primary">✏️</button></a>
-          <a href="/id_card/{{ s.id }}"><button class="btn btn-success">🎫</button></a>
-          <a href="/promote/{{ s.id }}"><button class="btn btn-warning">⬆️</button></a>
-          <a href="/delete/{{ s.id }}" onclick="return confirm('Delete student?')"><button class="btn btn-danger">🗑️</button></a>
+          <a href="/edit/{{ s.id }}" class="btn btn-primary">✏️</a>
+          <a href="/id_card/{{ s.id }}" class="btn btn-success">🎫</a>
+          <a href="/promote/{{ s.id }}" class="btn btn-warning">⬆️</a>
+          <a href="/delete/{{ s.id }}" class="btn btn-danger" onclick="return confirm('Delete student?')">🗑️</a>
         </td>
       </tr>
       {% endfor %}

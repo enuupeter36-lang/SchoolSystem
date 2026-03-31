@@ -23,7 +23,7 @@
     .form-group { margin-bottom: 20px; }
     label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
     input, select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: all 0.3s ease; }
-    input:focus, select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234,0.2); }
+    input:focus, select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.2); }
 
     .btn {
       width: 100%;
@@ -54,6 +54,16 @@
       transition: all 0.3s ease;
     }
     .back-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(245,87,108,0.4); }
+
+    .current-photo {
+      display: block;
+      margin-bottom: 10px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 2px solid #667eea;
+      object-fit: cover;
+    }
   </style>
 </head>
 <body>
@@ -64,15 +74,15 @@
   <form method="POST" action="/edit/{{ student.id }}" enctype="multipart/form-data">
     <div class="form-group">
       <label>Admission Number *</label>
-      <input type="text" name="admission" value="{{ student.admission }}" required>
+      <input type="text" name="admission" value="{{ student.admission }}" required autocomplete="off">
     </div>
     <div class="form-group">
       <label>First Name *</label>
-      <input type="text" name="first_name" value="{{ student.first_name }}" required>
+      <input type="text" name="first_name" value="{{ student.first_name }}" required autocomplete="off">
     </div>
     <div class="form-group">
       <label>Last Name *</label>
-      <input type="text" name="last_name" value="{{ student.last_name }}" required>
+      <input type="text" name="last_name" value="{{ student.last_name }}" required autocomplete="off">
     </div>
     <div class="form-group">
       <label>Gender</label>
@@ -100,18 +110,21 @@
     </div>
     <div class="form-group">
       <label>Stream</label>
-      <input type="text" name="stream" value="{{ student.stream }}">
+      <input type="text" name="stream" value="{{ student.stream }}" autocomplete="off">
     </div>
     <div class="form-group">
       <label>Parent/Guardian Name</label>
-      <input type="text" name="parent" value="{{ student.parent }}">
+      <input type="text" name="parent" value="{{ student.parent }}" autocomplete="off">
     </div>
     <div class="form-group">
       <label>Phone Number *</label>
-      <input type="text" name="phone" value="{{ student.phone }}" required>
+      <input type="text" name="phone" value="{{ student.phone }}" required autocomplete="off">
     </div>
     <div class="form-group">
       <label>Student Photo</label>
+      {% if student.photo %}
+        <img src="{{ url_for('static', filename='student_photos/' + student.photo) }}" class="current-photo">
+      {% endif %}
       <input type="file" name="photo" accept="image/*">
     </div>
 
